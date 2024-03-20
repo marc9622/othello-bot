@@ -1,24 +1,32 @@
 import java.util.ArrayList;
 
-public class AlphaOthelloAIv3 implements IOthelloAI {
-    public Position decideMove(GameState state) {
+public final class AlphaOthelloAIv3 implements IOthelloAI {
+
+    private static int maxIndex;
+    private static int minIndex;
+
+    public Position decideMove(final GameState state) {
+        maxIndex = state.getPlayerInTurn() - 1;
+        minIndex = 1 - maxIndex;
+
         return findBestMove(state);
     }
 
-    private Position findBestMove(GameState state) {
-        ArrayList<Position> moves = state.legalMoves();
+    private static Position findBestMove(final GameState state) {
+
+        final int depth = 8;
+        final ArrayList<Position> moves = state.legalMoves();
 
         if (moves.size() == 1)
             return moves.get(0);
 
-        int depth = 7;
-        float maxEvaluation = -100f;
-        Position bestMove = null;
-        for (Position move : moves) {
-            GameState newState = copyState(state);
-            newState.insertToken(move);
+        int maxEvaluation = Integer.MIN_VALUE;
+        Position bestMove = new Position(-1, -1);
 
-            float evaluation = minimax(newState, -100f, 100f, depth - 1, false);
+        for (final Position move : moves) {
+            final GameState newState = newState(state, move);
+
+            final int evaluation = minimax(newState, Integer.MIN_VALUE, Integer.MAX_VALUE, depth - 1, false);
 
             if (maxEvaluation <= evaluation) {
                 maxEvaluation = evaluation;
@@ -29,27 +37,29 @@ public class AlphaOthelloAIv3 implements IOthelloAI {
         return bestMove;
     }
 
-    private float minimax(GameState state, float alpha, float beta, int depth, boolean maximizingPlayer) {
+    private static int minimax(final GameState state, int alpha, int beta,
+                               final int depth, final boolean maximizingPlayer) {
+
         if (depth <= 0 || state.isFinished())
             return evaluation(state);
 
-        ArrayList<Position> moves = state.legalMoves();
+        final ArrayList<Position> moves = state.legalMoves();
+
         if (moves.size() == 0) {
-            GameState newState = copyState(state);
-            newState.changePlayer();
+            final GameState newState = newState(state, new Position(-1, -1));
 
             return minimax(newState, alpha, beta, depth - 1, !maximizingPlayer);
         }
 
         if (maximizingPlayer) {
-            float maxEvaluation = -100f;
+            int maxEvaluation = Integer.MIN_VALUE;
 
-            for (Position move : moves) {
-                GameState newState = copyState(state);
-                newState.insertToken(move);
+            for (final Position move : moves) {
+                final GameState newState = newState(state, move);
 
-                maxEvaluation = Math.max(maxEvaluation,
-                        minimax(newState, alpha, beta, depth - 1, !maximizingPlayer));
+                final int evaluation = minimax(newState, alpha, beta, depth - 1, !maximizingPlayer);
+
+                maxEvaluation = Math.max(evaluation, maxEvaluation);
                 alpha = Math.max(alpha, maxEvaluation);
 
                 if (alpha >= beta)
@@ -58,42 +68,45 @@ public class AlphaOthelloAIv3 implements IOthelloAI {
 
             return maxEvaluation;
         } else {
-            float minEvaluation = 100f;
+            int minEvaluation = Integer.MAX_VALUE;
 
-            for (Position move : moves) {
-                GameState newState = copyState(state);
-                newState.insertToken(move);
+            for (final Position move : moves) {
+                final GameState newState = newState(state, move);
 
-                minEvaluation = Math.min(minEvaluation,
-                        minimax(newState, alpha, beta, depth - 1, !maximizingPlayer));
+                final int evaluation = minimax(newState, alpha, beta, depth - 1, !maximizingPlayer);
 
-                if (alpha <= minEvaluation)
-                    break;
-
+                minEvaluation = Math.min(evaluation, minEvaluation);
                 beta = Math.min(beta, minEvaluation);
-            }
 
+                if (alpha >= alpha)
+                    break;
+            }
+            
             return minEvaluation;
         }
     }
 
-    private float evaluation(GameState state) {
-        int[] counts = state.countTokens();
+    private static int evaluation(final GameState state) {
+        final int[] counts = state.countTokens();
 
         if (state.isFinished()) {
-            if (counts[0] > counts[1])
-                return state.getBoard().length * state.getBoard().length;
+            final int boardLength = state.getBoard().length;
 
-            if (counts[0] < counts[1])
-                return -state.getBoard().length * state.getBoard().length;
+            if (counts[maxIndex] > counts[minIndex])
+                return boardLength * boardLength;
+
+            if (counts[maxIndex] < counts[minIndex])
+                return -boardLength * boardLength;
 
             return 0;
         }
 
-        return counts[0] - counts[1];
+        return counts[maxIndex] - counts[minIndex];
     }
 
-    private GameState copyState(GameState state) {
-        return new GameState(state.getBoard(), state.getPlayerInTurn());
+    private static GameState newState(final GameState state, final Position move) {
+        final GameState newState = new GameState(state.getBoard(), state.getPlayerInTurn());
+        newState.insertToken(move);
+        return newState;
     }
 }

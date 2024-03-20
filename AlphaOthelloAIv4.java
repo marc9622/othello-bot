@@ -84,12 +84,12 @@ public class AlphaOthelloAIv4 implements IOthelloAI {
 
     private int evaluation(GameState state) {
         if (state.isFinished())
-            return finishedHeuristic(state);
+            return finishedEvaluation(state);
 
-        return cornerHeuristic(state, 70) + mobilityHeuristic(state, 10) + countHeuristic(state, 50);
+        return cornerEvaluation(state, 70) + mobilityEvaluation(state, 10) + countEvaluation(state, 50);
     }
 
-    public int finishedHeuristic(GameState state) {
+    public int finishedEvaluation(GameState state) {
         int[] counts = state.countTokens();
         int player1 = counts[maxIndex];
         int player2 = counts[minIndex];
@@ -103,7 +103,7 @@ public class AlphaOthelloAIv4 implements IOthelloAI {
         return 0;
     }
 
-    public int cornerHeuristic(GameState state, int weight) {
+    public int cornerEvaluation(GameState state, int weight) {
         int[][] board = state.getBoard();
 
         int boardLength = board.length - 1;
@@ -126,7 +126,7 @@ public class AlphaOthelloAIv4 implements IOthelloAI {
         return weight * cornerCount / 4;
     }
 
-    public int mobilityHeuristic(GameState state, int weight) {
+    public int mobilityEvaluation(GameState state, int weight) {
         GameState newState = copyState(state);
 
         int player1 = newState.legalMoves().size();
@@ -140,7 +140,7 @@ public class AlphaOthelloAIv4 implements IOthelloAI {
         return 0;
     }
 
-    public int countHeuristic(GameState state, int weight) {
+    public int countEvaluation(GameState state, int weight) {
         int[] counts = state.countTokens();
         int player1 = counts[maxIndex];
         int player2 = counts[minIndex];

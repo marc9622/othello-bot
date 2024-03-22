@@ -14,7 +14,7 @@ public final class AlphaOthelloAIv3 implements IOthelloAI {
 
     private static Position findBestMove(final GameState state) {
 
-        final int depth = 8;
+        final int depth = Constants.DEPTH;
         final ArrayList<Position> moves = state.legalMoves();
 
         if (moves.size() == 1)

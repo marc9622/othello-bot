@@ -5,11 +5,11 @@ public class AlphaOthelloAIv1 implements IOthelloAI {
 
     @Override
     public Position decideMove(GameState state) {
-        return maxValue(state, 0).pos;
+        return maxValue(state, Constants.DEPTH).pos;
     }
 
     private ActionValue maxValue(GameState state, int depth) {
-        depth += 1;
+        depth--;
 
         if (isCutoff(state, depth))
             return new ActionValue(null, eval(state));
@@ -31,7 +31,7 @@ public class AlphaOthelloAIv1 implements IOthelloAI {
     }
 
     private ActionValue minValue(GameState state, int depth) {
-        depth += 1;
+        depth--;
 
         if (isCutoff(state, depth))
             return new ActionValue(null, eval(state));
@@ -53,7 +53,7 @@ public class AlphaOthelloAIv1 implements IOthelloAI {
     }
 
     private static boolean isCutoff(GameState state, int depth) {
-        return depth >= 6 || state.isFinished();
+        return depth <= 0 || state.isFinished();
     }
 
     private static int eval(GameState state) {

@@ -9,11 +9,11 @@ public final class AlphaOthelloAIv2 implements IOthelloAI {
     @Override
     public final Position decideMove(final GameState state) {
         if (debug) System.out.println("");
-        return maxValue(state, 0).pos;
+        return maxValue(state, Constants.DEPTH).pos;
     }
 
     private ActionValue maxValue(final GameState state, int depth) {
-        depth += 1;
+        depth--;
 
         if (isCutoff(state, depth))
             return new ActionValue(null, eval(state));
@@ -40,7 +40,7 @@ public final class AlphaOthelloAIv2 implements IOthelloAI {
     }
 
     private ActionValue minValue(final GameState state, int depth) {
-        depth += 1;
+        depth--;
 
         if (isCutoff(state, depth))
             return new ActionValue(null, eval(state));
@@ -66,7 +66,7 @@ public final class AlphaOthelloAIv2 implements IOthelloAI {
     }
 
     private static boolean isCutoff(final GameState state, final int depth) {
-        return depth >= 6 || state.isFinished();
+        return depth <= 0 || state.isFinished();
     }
 
     private static int eval(final GameState state) {

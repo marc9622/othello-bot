@@ -23,6 +23,8 @@ public class OthelloGUI extends JComponent implements MouseListener
     private boolean humanPlayer;	// Whether a human player is playing or not
     private IOthelloAI ai1;			// The AI for player 1 if there are no human player
     private IOthelloAI ai2;			// The AI for player 2 
+    private long ai1Time = 0;
+    private long ai2Time = 0;
 
     // Images for drawing the game board
     private Image 		part, blackPion, whitePion, background;
@@ -104,32 +106,36 @@ public class OthelloGUI extends JComponent implements MouseListener
     			g.drawImage(whiteWon, size*imgSize/2-(imgSize/2), size*imgSize/2+(imgSize/4), this);
     		else
     			g.drawImage(tie, size*imgSize/2-(imgSize/2), size*imgSize/2+(imgSize/4), this);
+
+            System.out.println("Black took " + ai1Time / 1_000_000_000d + " s in total");
+            System.out.println("White took " + ai2Time / 1_000_000_000d + " s in total");
     	}		
     }
 
     public void mouseClicked(MouseEvent e){
     	int currentPlayer = state.getPlayerInTurn();
     	if ( !state.isFinished() ){
-    		Position place = getPlaceForNextToken(e);
-    		if ( state.insertToken(place) ){ // Chosen move is legal
-				boolean nextPlayerCannotMove = state.legalMoves().isEmpty();
-   				if ( nextPlayerCannotMove ){ // The next player cannot move
-					repaint();
-   					state.changePlayer();
-   					if ( humanPlayer ){ // If there is a human involved, (s)he needs to know this
-   	  					boolean canMoveAfterwards = !state.legalMoves().isEmpty();
-   	   					if ( canMoveAfterwards ){
-   	   						String message = currentPlayer == 1 ? "Your opponent has no legal moves. It is your turn again." 
-   	   													 	    : "You have no legal moves. Your opponent will make another move (click again).";
-   	   						JOptionPane.showMessageDialog(this, message);
-   	   					}  						
-   					}
-   				}
- 			}
-   			else 
-   				illegalMoveAttempted(place); 		
-    		repaint();
-    	}
+            Position place = getPlaceForNextToken(e);
+            if ( state.insertToken(place) ){ // Chosen move is legal
+                boolean nextPlayerCannotMove = state.legalMoves().isEmpty();
+                if ( nextPlayerCannotMove ){ // The next player cannot move
+                    repaint();
+                    state.changePlayer();
+                    if ( humanPlayer ){ // If there is a human involved, (s)he needs to know this
+                        boolean canMoveAfterwards = !state.legalMoves().isEmpty();
+                        if ( canMoveAfterwards ){
+                            String message = currentPlayer == 1 ? "Your opponent has no legal moves. It is your turn again." 
+                                                                : "You have no legal moves. Your opponent will make another move (click again).";
+                            JOptionPane.showMessageDialog(this, message);
+                        }  						
+                    }
+                }
+            }
+            else {
+                illegalMoveAttempted(place); 		
+            }
+            repaint();
+        }
     }
     
     /**
@@ -137,14 +143,24 @@ public class OthelloGUI extends JComponent implements MouseListener
      * player is in turn, otherwise ask corresponding AI)
      */
     private Position getPlaceForNextToken(MouseEvent e){
-    	if ( state.getPlayerInTurn() == 2 ) 
-			return ai2.decideMove(state);
-		else {
-			if ( humanPlayer )
-				return humanSelectedPlace(e);
-			else
-				return ai1.decideMove(state);
-		}
+    	if ( state.getPlayerInTurn() == 2 ) {
+            long t = System.nanoTime();
+			Position p = ai2.decideMove(state);
+            t = System.nanoTime() - t;
+            System.out.println("White AI took " + (t / 1_000_000_000d) + " s");
+            ai2Time += t;
+            return p;
+        }
+
+        if ( humanPlayer )
+            return humanSelectedPlace(e);
+
+        long t = System.nanoTime();
+        Position p = ai1.decideMove(state);
+        t = System.nanoTime() - t;
+        System.out.println("Black AI took " + (t / 1_000_000_000d) + " s");
+        ai1Time += t;
+        return p;
     }
 
     /**
